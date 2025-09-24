@@ -1,0 +1,19 @@
+Season,Contestant_Name,Age,Gender,Occupation,Strategic_Archetype,Merge_Probability,Merge_Prediction,Finale_Probability,Finale_Prediction,Winner_Probability,Winner_Prediction,Expected_Placement,Expected_Days,Prediction_Date
+49,Jake Latimer,36,M,Correctional officer,Hero,0.995,True,1.0,True,0.08,False,3,25,2025-09-24
+49,Jeremiah Ing,39,M,Global events manager,Social_Player,0.995,True,1.0,True,0.07,False,3,25,2025-09-24
+49,Sophi Balerdi,27,F,Entrepreneur,Strategic_Player,0.995,True,1.0,True,0.06,False,3,25,2025-09-24
+49,Alex Moore,27,M,Political comms director,Strategic_Player,0.995,True,1.0,True,0.05,False,3,25,2025-09-24
+49,Kristina Mills,36,F,MBA career coach,Social_Player,0.995,True,1.0,True,0.05,False,3,25,2025-09-24
+49,"Kimberly ""Annie"" Davis",49,F,Musician,Social_Player,0.995,True,1.0,True,0.04,False,3,25,2025-09-24
+49,Rizo Velovic,25,M,Tech sales,Social_Player,0.995,True,1.0,True,0.04,False,3,25,2025-09-24
+49,Savannah Louie,31,F,Former reporter,Strategic_Player,0.995,True,1.0,True,0.04,False,3,25,2025-09-24
+49,Nicole Mazullo,26,F,Financial crime consultant,Strategic_Player,0.995,True,1.0,True,0.04,False,3,25,2025-09-24
+49,Jawann Pitts,28,M,Video editor,Strategic_Player,0.995,True,1.0,True,0.04,False,3,25,2025-09-24
+49,Sophie Segreti,31,F,Strategy associate,Strategic_Player,0.995,True,1.0,True,0.04,False,3,25,2025-09-24
+49,"Michelle ""MC"" Chukwujekwu",29,F,Fitness trainer,Challenge_Beast,0.995,True,1.0,True,0.03,False,3,25,2025-09-24
+49,Matt Williams,52,M,Airport ramp agent,Provider,0.995,True,1.0,True,0.03,False,3,25,2025-09-24
+49,Jason Treul,32,M,Law clerk,Under_Radar,0.995,True,1.0,True,0.03,False,3,25,2025-09-24
+49,Shannon Fairweather,28,F,Wellness specialist,Social_Player,0.995,True,1.0,True,0.03,False,3,25,2025-09-24
+49,Sage Ahrens-Nichols,30,F,Clinical social worker,Social_Player,0.995,True,1.0,True,0.03,False,3,25,2025-09-24
+49,Nate Moore,47,M,Film producer,Strategic_Player,0.995,True,1.0,True,0.02,False,3,25,2025-09-24
+49,Steven Ramm,35,M,Rocket scientist,Challenge_Beast,0.995,True,1.0,True,0.02,False,3,25,2025-09-24
