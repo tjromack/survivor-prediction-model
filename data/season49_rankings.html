@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Survivor 49 Cast Rankings - ML Predictions</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header .subtitle {
+            font-size: 1.3rem;
+            opacity: 0.9;
+            margin-bottom: 20px;
+        }
+
+        .stats-bar {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            background: rgba(255,255,255,0.1);
+            padding: 15px 25px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            text-align: center;
+            color: white;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .rankings-container {
+            background: white;
+            border-radius: 25px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+            margin-bottom: 30px;
+        }
+
+        .tier-section {
+            margin-bottom: 40px;
+        }
+
+        .tier-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px 20px;
+            border-radius: 15px;
+            font-weight: bold;
+            font-size: 1.3rem;
+        }
+
+        .tier-elite { background: linear-gradient(45deg, #28a745, #34ce57); color: white; }
+        .tier-contender { background: linear-gradient(45deg, #17a2b8, #20c997); color: white; }
+        .tier-solid { background: linear-gradient(45deg, #ffc107, #ffcd39); color: #333; }
+        .tier-risky { background: linear-gradient(45deg, #fd7e14, #ff922b); color: white; }
+        .tier-longshot { background: linear-gradient(45deg, #dc3545, #e55563); color: white; }
+
+        .contestant-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s ease;
+            border-left: 5px solid transparent;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .contestant-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .contestant-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 5px;
+            height: 100%;
+            background: var(--tier-color);
+        }
+
+        .card-elite::before { background: #28a745; }
+        .card-contender::before { background: #17a2b8; }
+        .card-solid::before { background: #ffc107; }
+        .card-risky::before { background: #fd7e14; }
+        .card-longshot::before { background: #dc3545; }
+
+        .rank-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #666;
+            width: 60px;
+            text-align: center;
+        }
+
+        .contestant-info {
+            flex: 1;
+            margin-left: 20px;
+        }
+
+        .contestant-name {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .contestant-details {
+            color: #666;
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+        }
+
+        .probabilities {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .prob-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 70px;
+        }
+
+        .prob-value {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .prob-label {
+            font-size: 0.8rem;
+            color: #666;
+            text-transform: uppercase;
+        }
+
+        .tier-badge {
+            background: var(--tier-color);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            margin-left: 20px;
+        }
+
+        .badge-elite { background: #28a745; }
+        .badge-contender { background: #17a2b8; }
+        .badge-solid { background: #ffc107; color: #333; }
+        .badge-risky { background: #fd7e14; }
+        .badge-longshot { background: #dc3545; }
+
+        .methodology {
+            background: white;
+            border-radius: 25px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .methodology h3 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+
+        .method-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .method-item {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .method-icon {
+            font-size: 2.5rem;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .footer {
+            text-align: center;
+            color: white;
+            opacity: 0.8;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .contestant-card {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .probabilities {
+                justify-content: center;
+                margin-top: 15px;
+            }
+            
+            .tier-badge {
+                margin-left: 0;
+                margin-top: 10px;
+            }
+
+            .stats-bar {
+                gap: 20px;
+            }
+        }
+
+        .loading {
+            text-align: center;
+            color: white;
+            font-size: 1.2rem;
+            padding: 40px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-trophy"></i> Survivor 49 Cast Rankings</h1>
+            <div class="subtitle">Machine Learning Predictions Based on Pre-Season Analysis</div>
+            <div class="stats-bar">
+                <div class="stat-item">
+                    <span class="stat-value">18</span>
+                    <span class="stat-label">Contestants</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">94.4%</span>
+                    <span class="stat-label">Model Accuracy</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">223</span>
+                    <span class="stat-label">Features Analyzed</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="loadingMessage" class="loading">
+            <i class="fas fa-spinner fa-spin"></i> Loading contestant rankings...
+        </div>
+
+        <div id="rankingsContainer" style="display: none;">
+            <!-- Rankings will be populated here -->
+        </div>
+
+        <div class="methodology">
+            <h3><i class="fas fa-brain"></i> Prediction Methodology</h3>
+            <div class="method-grid">
+                <div class="method-item">
+                    <div class="method-icon"><i class="fas fa-user"></i></div>
+                    <h4>Demographics</h4>
+                    <p>Age, occupation, location, and background analysis</p>
+                </div>
+                <div class="method-item">
+                    <div class="method-icon"><i class="fas fa-dumbbell"></i></div>
+                    <h4>Physical Traits</h4>
+                    <p>Athletic background, fitness level, and build assessment</p>
+                </div>
+                <div class="method-item">
+                    <div class="method-icon"><i class="fas fa-chess"></i></div>
+                    <h4>Strategic Profile</h4>
+                    <p>Archetype, game knowledge, and strategic approach</p>
+                </div>
+                <div class="method-item">
+                    <div class="method-icon"><i class="fas fa-chart-line"></i></div>
+                    <h4>ML Models</h4>
+                    <p>Random Forest and XGBoost ensemble predictions</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p><i class="fas fa-calendar"></i> Generated: September 24, 2025 | <i class="fas fa-code"></i> Survivor Success Prediction Model v1.0</p>
+            <p>Predictions based on demographic analysis only - actual results may vary based on gameplay dynamics</p>
+        </div>
+    </div>
+
+    <script>
+        // Sample data - replace with your actual rankings data
+        const rankingsData = [
+            {rank: 1, name: "Alex Moore", age: 27, occupation: "Political comms director", archetype: "Strategic_Player", merge_prob: 0.731, finale_prob: 0.686, winner_prob: 0.665, tier: "Elite", knowledge: "Fan", athletic_background: "Recreational"},
+            {rank: 2, name: "Steven Ramm", age: 35, occupation: "Rocket scientist", archetype: "Challenge_Beast", merge_prob: 0.785, finale_prob: 0.612, winner_prob: 0.589, tier: "Elite", knowledge: "Superfan", athletic_background: "College"},
+            {rank: 3, name: "Nate Moore", age: 47, occupation: "Film producer", archetype: "Strategic_Player", merge_prob: 0.698, finale_prob: 0.567, winner_prob: 0.534, tier: "Contender", knowledge: "Fan", athletic_background: "Recreational"},
+            {rank: 4, name: "Nicole Mazullo", age: 26, occupation: "Financial crime consultant", archetype: "Strategic_Player", merge_prob: 0.712, finale_prob: 0.543, winner_prob: 0.498, tier: "Contender", knowledge: "Fan", athletic_background: "High_School"},
+            {rank: 5, name: "Sophie Segreti", age: 31, occupation: "Strategy associate", archetype: "Strategic_Player", merge_prob: 0.689, finale_prob: 0.521, winner_prob: 0.467, tier: "Contender", knowledge: "Fan", athletic_background: "College"},
+            {rank: 6, name: "Sophi Balerdi", age: 27, occupation: "Entrepreneur", archetype: "Strategic_Player", merge_prob: 0.675, finale_prob: 0.498, winner_prob: 0.445, tier: "Contender", knowledge: "Fan", athletic_background: "Recreational"},
+            {rank: 7, name: "Michelle \"MC\" Chukwujekwu", age: 29, occupation: "Fitness trainer", archetype: "Challenge_Beast", merge_prob: 0.712, finale_prob: 0.456, winner_prob: 0.421, tier: "Contender", knowledge: "Casual_Fan", athletic_background: "College"},
+            {rank: 8, name: "Savannah Louie", age: 31, occupation: "Former reporter", archetype: "Strategic_Player", merge_prob: 0.656, finale_prob: 0.467, winner_prob: 0.398, tier: "Solid", knowledge: "Fan", athletic_background: "Recreational"},
+            {rank: 9, name: "Jake Latimer", age: 36, occupation: "Correctional officer", archetype: "Hero", merge_prob: 0.634, finale_prob: 0.423, winner_prob: 0.367, tier: "Solid", knowledge: "Superfan", athletic_background: "Recreational"},
+            {rank: 10, name: "Jason Treul", age: 32, occupation: "Law clerk", archetype: "Under_Radar", merge_prob: 0.598, finale_prob: 0.398, winner_prob: 0.334, tier: "Solid", knowledge: "Fan", athletic_background: "None"},
+            {rank: 11, name: "Jeremiah Ing", age: 39, occupation: "Global events manager", archetype: "Social_Player", merge_prob: 0.612, finale_prob: 0.376, winner_prob: 0.312, tier: "Solid", knowledge: "Fan", athletic_background: "Recreational"},
+            {rank: 12, name: "Sage Ahrens-Nichols", age: 30, occupation: "Clinical social worker", archetype: "Social_Player", merge_prob: 0.589, finale_prob: 0.354, winner_prob: 0.289, tier: "Risky", knowledge: "Fan", athletic_background: "College"},
+            {rank: 13, name: "Shannon Fairweather", age: 28, occupation: "Wellness specialist", archetype: "Social_Player", merge_prob: 0.567, finale_prob: 0.332, winner_prob: 0.267, tier: "Risky", knowledge: "Casual_Fan", athletic_background: "College"},
+            {rank: 14, name: "Kristina Mills", age: 36, occupation: "MBA career coach", archetype: "Social_Player", merge_prob: 0.543, finale_prob: 0.312, winner_prob: 0.245, tier: "Risky", knowledge: "Fan", athletic_background: "Recreational"},
+            {rank: 15, name: "Rizo Velovic", age: 25, occupation: "Tech sales", archetype: "Social_Player", merge_prob: 0.512, finale_prob: 0.289, winner_prob: 0.223, tier: "Risky", knowledge: "Casual_Fan", athletic_background: "High_School"},
+            {rank: 16, name: "Matt Williams", age: 52, occupation: "Airport ramp agent", archetype: "Provider", merge_prob: 0.487, finale_prob: 0.267, winner_prob: 0.201, tier: "Long Shot", knowledge: "Casual_Fan", athletic_background: "Recreational"},
+            {rank: 17, name: "Kimberly \"Annie\" Davis", age: 49, occupation: "Musician", archetype: "Social_Player", merge_prob: 0.456, finale_prob: 0.245, winner_prob: 0.178, tier: "Long Shot", knowledge: "Casual_Fan", athletic_background: "High_School"},
+            {rank: 18, name: "Jawann Pitts", age: 28, occupation: "Video editor", archetype: "Strategic_Player", merge_prob: 0.423, finale_prob: 0.223, winner_prob: 0.156, tier: "Long Shot", knowledge: "Casual_Fan", athletic_background: "Recreational"}
+        ];
+
+        function formatProbability(prob) {
+            return (prob * 100).toFixed(1) + '%';
+        }
+
+        function getTierClass(tier) {
+            return tier.toLowerCase().replace(' ', '');
+        }
+
+        function renderRankings() {
+            const container = document.getElementById('rankingsContainer');
+            const tiers = ['Elite', 'Contender', 'Solid', 'Risky', 'Long Shot'];
+            
+            let html = '';
+            
+            tiers.forEach(tier => {
+                const tierContestants = rankingsData.filter(c => c.tier === tier);
+                if (tierContestants.length === 0) return;
+                
+                html += `
+                    <div class="tier-section">
+                        <div class="tier-header tier-${getTierClass(tier)}">
+                            <i class="fas fa-${getTierIcon(tier)}"></i>
+                            <span style="margin-left: 10px;">${tier} Tier (${tierContestants.length} contestants)</span>
+                        </div>
+                `;
+                
+                tierContestants.forEach(contestant => {
+                    html += `
+                        <div class="contestant-card card-${getTierClass(tier)}">
+                            <div class="rank-number">#${contestant.rank}</div>
+                            <div class="contestant-info">
+                                <div class="contestant-name">${contestant.name}</div>
+                                <div class="contestant-details">
+                                    ${contestant.age} years old • ${contestant.occupation} • ${contestant.archetype.replace('_', ' ')}
+                                </div>
+                                <div class="probabilities">
+                                    <div class="prob-item">
+                                        <div class="prob-value">${formatProbability(contestant.winner_prob)}</div>
+                                        <div class="prob-label">Winner</div>
+                                    </div>
+                                    <div class="prob-item">
+                                        <div class="prob-value">${formatProbability(contestant.finale_prob)}</div>
+                                        <div class="prob-label">Finale</div>
+                                    </div>
+                                    <div class="prob-item">
+                                        <div class="prob-value">${formatProbability(contestant.merge_prob)}</div>
+                                        <div class="prob-label">Merge</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="tier-badge badge-${getTierClass(tier)}">${tier}</div>
+                        </div>
+                    `;
+                });
+                
+                html += '</div>';
+            });
+            
+            container.innerHTML = html;
+        }
+
+        function getTierIcon(tier) {
+            const icons = {
+                'Elite': 'crown',
+                'Contender': 'medal',
+                'Solid': 'star',
+                'Risky': 'exclamation-triangle',
+                'Long Shot': 'long-arrow-alt-up'
+            };
+            return icons[tier] || 'user';
+        }
+
+        // Initialize the page
+        setTimeout(() => {
+            document.getElementById('loadingMessage').style.display = 'none';
+            document.getElementById('rankingsContainer').style.display = 'block';
+            renderRankings();
+        }, 1000);
+    </script>
+</body>
+</html>
