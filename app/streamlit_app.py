@@ -39,6 +39,15 @@ except ImportError:
         st.error(f"❌ Cannot import required modules: {e}")
         st.stop()
 
+# Import External Factors Analyzer with error handling
+try:
+    from src.external_factors_analyzer import ExternalFactorsAnalyzer
+    external_factors_available = True
+    print("✅ External Factors Analyzer imported successfully")
+except ImportError:
+    external_factors_available = False
+    print("⚠️ External Factors Analyzer not available")
+
 # Page configuration
 st.set_page_config(
     page_title="Survivor Success Predictor",
@@ -118,18 +127,351 @@ st.markdown("""
 
 # Main header
 st.markdown('<h1 class="main-header">🏝️ Survivor Success Predictor</h1>', unsafe_allow_html=True)
-st.markdown("**Advanced ML predictions for CBS Survivor - Now with Pre-Season Analysis**")
+st.markdown("**Advanced ML predictions for CBS Survivor - Now with Pre-Season Analysis & External Factors**")
 
 # Sidebar for navigation
 st.sidebar.title("Navigation")
 page = st.sidebar.selectbox("Choose a page:", [
     "Individual Prediction", 
     "Season 49 Cast Rankings",
-    "Batch Analysis", 
+    "Batch Analysis",
+    "External Factors Analysis",  # NEW PAGE ADDED HERE
     "Model Performance", 
     "Season 49 Management",
     "Historical Analysis"
 ])
+
+def create_external_factors_dashboard():
+    """Create Streamlit dashboard for external factors analysis"""
+    st.header("🧬 External Factors Deep Dive")
+    st.markdown("**Analyzing demographic and pre-game factors that predict Survivor success**")
+    
+    # Initialize analyzer
+    @st.cache_data
+    def load_external_analysis():
+        analyzer = ExternalFactorsAnalyzer()
+        return analyzer.generate_external_factors_report()
+    
+    try:
+        results = load_external_analysis()
+    except Exception as e:
+        st.error(f"Error loading external factors analysis: {e}")
+        return
+    
+    if not isinstance(results, dict):
+        st.error("Failed to load external factors analysis")
+        return
+    
+    # Overview metrics
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        st.metric("Sample Size", f"{results['sample_size']} contestants")
+    with col2:
+        age_corr = results['age_analysis']['correlation']
+        st.metric("Age-Success Correlation", f"{age_corr:.3f}")
+    with col3:
+        income_corr = results['occupation_analysis']['income_correlation'] 
+        st.metric("Income-Success Correlation", f"{income_corr:.3f}")
+    with col4:
+        phys_corr = results['physical_analysis']['physical_correlation']
+        st.metric("Physical-Success Correlation", f"{phys_corr:.3f}")
+    
+    # Tabs for different analyses
+    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+        "Age Analysis", "Occupation Impact", "Strategic Validation", 
+        "Regional Patterns", "Physical Factors", "Success Archetypes"
+    ])
+    
+    with tab1:
+        st.subheader("Age-Based Success Patterns")
+        
+        # Age analysis visualization
+        age_data = results['age_analysis']['age_analysis']
+        
+        # Create age analysis plots
+        fig = make_subplots(
+            rows=2, cols=2,
+            subplot_titles=['Merge Rate by Age', 'Win Rate by Age', 'Days Lasted by Age', 'Sample Sizes'],
+        )
+        
+        categories = age_data.index
+        
+        # Merge rate
+        fig.add_trace(go.Bar(x=categories, y=age_data['Merge_Rate'], name='Merge Rate', 
+                            marker_color='lightblue'), row=1, col=1)
+        
+        # Win rate
+        fig.add_trace(go.Bar(x=categories, y=age_data['Win_Rate'], name='Win Rate', 
+                            marker_color='gold'), row=1, col=2)
+        
+        # Days lasted
+        fig.add_trace(go.Bar(x=categories, y=age_data['Avg_Days'], name='Avg Days', 
+                            marker_color='lightgreen'), row=2, col=1)
+        
+        # Sample sizes
+        fig.add_trace(go.Bar(x=categories, y=age_data['Count'], name='Count', 
+                            marker_color='lightcoral'), row=2, col=2)
+        
+        fig.update_layout(height=600, showlegend=False, title_text="Age Analysis Dashboard")
+        st.plotly_chart(fig, use_container_width=True)
+        
+        # Age data table
+        st.subheader("Age Category Breakdown")
+        st.dataframe(age_data.style.format({
+            'Merge_Rate': '{:.1%}',
+            'Finale_Rate': '{:.1%}', 
+            'Win_Rate': '{:.1%}',
+            'Avg_Days': '{:.1f}',
+            'Avg_Placement': '{:.1f}'
+        }))
+        
+        # Age-Gender interaction
+        st.subheader("Age-Gender Success Interaction")
+        try:
+            age_gender_data = results['age_analysis']['age_gender']
+            age_gender_pivot = age_gender_data.reset_index().pivot(
+                index='age_category', columns='Gender', values='made_merge_binary'
+            )
+            st.dataframe(age_gender_pivot.style.format("{:.1%}"))
+        except Exception as e:
+            st.info("Age-Gender interaction data not available")
+    
+    with tab2:
+        st.subheader("Occupation and Socioeconomic Impact")
+        
+        # Income vs success scatter plot
+        occ_data = results['occupation_analysis']['occupation_analysis']
+        
+        fig = px.scatter(
+            occ_data.reset_index(), 
+            x='Est_Income', 
+            y='Merge_Rate',
+            size='Count',
+            hover_name='Occupation_Category',
+            hover_data={'Win_Rate': True, 'Avg_Days': True},
+            title="Occupation Income vs Success Rate"
+        )
+        
+        fig.update_layout(
+            xaxis_title="Estimated Income ($)",
+            yaxis_title="Merge Success Rate"
+        )
+        
+        st.plotly_chart(fig, use_container_width=True)
+        
+        # Occupation analysis table
+        st.subheader("Occupation Category Analysis")
+        st.dataframe(occ_data.style.format({
+            'Merge_Rate': '{:.1%}',
+            'Finale_Rate': '{:.1%}', 
+            'Win_Rate': '{:.1%}',
+            'Est_Income': '${:,.0f}',
+            'Avg_Days': '{:.1f}'
+        }))
+        
+        # Education level analysis
+        st.subheader("Education Level Impact")
+        edu_data = results['occupation_analysis']['education_analysis']
+        st.dataframe(edu_data.style.format({
+            'made_merge_binary': '{:.1%}',
+            'winner': '{:.1%}'
+        }))
+    
+    with tab3:
+        st.subheader("Strategic Archetype Validation")
+        st.markdown("*Do contestants' self-reported strategic types match their actual gameplay?*")
+        
+        # Strategic validation plot
+        strategic_data = results['strategic_analysis']['strategic_validation']
+        
+        fig = make_subplots(
+            rows=2, cols=2,
+            subplot_titles=['Advantages Found', 'Alliance Count', 'Challenge Win Rate', 'Merge Success'],
+        )
+        
+        archetypes = strategic_data.index
+        
+        fig.add_trace(go.Bar(x=archetypes, y=strategic_data['Advantages_Found'], 
+                            name='Advantages'), row=1, col=1)
+        fig.add_trace(go.Bar(x=archetypes, y=strategic_data['Alliance_Count'], 
+                            name='Alliances'), row=1, col=2)
+        fig.add_trace(go.Bar(x=archetypes, y=strategic_data['overall_challenge_rate'], 
+                            name='Challenge Rate'), row=2, col=1)
+        fig.add_trace(go.Bar(x=archetypes, y=strategic_data['made_merge_binary'], 
+                            name='Merge Rate'), row=2, col=2)
+        
+        fig.update_layout(height=600, showlegend=False, title_text="Strategic Archetype Validation")
+        fig.update_xaxes(tickangle=45)
+        
+        st.plotly_chart(fig, use_container_width=True)
+        
+        # Strategic archetype data
+        st.subheader("Archetype Performance Validation")
+        st.dataframe(strategic_data.style.format({
+            'made_merge_binary': '{:.1%}',
+            'Advantages_Found': '{:.1f}',
+            'Alliance_Count': '{:.1f}',
+            'votes_per_tribal': '{:.2f}',
+            'overall_challenge_rate': '{:.1%}',
+            'Days_Lasted': '{:.1f}'
+        }))
+        
+        # Pre-game target validation
+        st.subheader("Pre-Game Target Size Validation")
+        st.markdown("*Does perceived threat level predict actual elimination risk?*")
+        target_data = results['strategic_analysis']['target_validation']
+        st.dataframe(target_data.style.format({
+            'early_boot': '{:.1%}',
+            'made_merge_binary': '{:.1%}',
+            'votes_per_tribal': '{:.2f}',
+            'Days_Lasted': '{:.1f}'
+        }))
+    
+    with tab4:
+        st.subheader("Regional and Geographic Patterns")
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.subheader("Regional Success Rates")
+            regional_data = results['regional_analysis']['regional_analysis']
+            fig_regional = px.bar(
+                regional_data.reset_index(),
+                x='Home_Region', 
+                y='made_merge_binary',
+                title="Merge Success Rate by Region"
+            )
+            st.plotly_chart(fig_regional, use_container_width=True)
+        
+        with col2:
+            st.subheader("Competitive Market Advantage")
+            market_data = results['regional_analysis']['market_analysis']
+            market_comparison = pd.DataFrame({
+                'Market Type': ['Non-Competitive', 'Competitive'],
+                'Merge Rate': market_data['made_merge_binary'].values,
+                'Win Rate': market_data['winner'].values
+            })
+            st.dataframe(market_comparison.style.format({
+                'Merge Rate': '{:.1%}',
+                'Win Rate': '{:.1%}'
+            }))
+        
+        # State analysis
+        st.subheader("State-Level Analysis (States with 3+ contestants)")
+        state_data = results['regional_analysis']['state_analysis']
+        st.dataframe(state_data.style.format({
+            'made_merge_binary': '{:.1%}'
+        }))
+    
+    with tab5:
+        st.subheader("Physical and Athletic Factors")
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.subheader("Athletic Background Impact")
+            athletic_data = results['physical_analysis']['athletic_analysis']
+            fig_athletic = px.bar(
+                athletic_data.reset_index(),
+                x='Athletic_Background',
+                y='made_merge_binary', 
+                title="Success Rate by Athletic Background"
+            )
+            st.plotly_chart(fig_athletic, use_container_width=True)
+        
+        with col2:
+            st.subheader("Physical Build Analysis")
+            build_data = results['physical_analysis']['build_analysis']
+            fig_build = px.bar(
+                build_data.reset_index(),
+                x='Physical_Build',
+                y='overall_challenge_rate',
+                title="Challenge Performance by Build"
+            )
+            st.plotly_chart(fig_build, use_container_width=True)
+        
+        # Physical factor tables
+        st.subheader("Athletic Background Detailed Analysis")
+        st.dataframe(athletic_data.style.format({
+            'overall_challenge_rate': '{:.1%}',
+            'made_merge_binary': '{:.1%}',
+            'Individual_Challenges_Won': '{:.1f}',
+            'Days_Lasted': '{:.1f}'
+        }))
+    
+    with tab6:
+        st.subheader("High-Success Demographic Combinations")
+        st.markdown("*Identifying the most successful contestant archetypes*")
+        
+        archetype_data = results['success_archetypes']
+        
+        # Top success archetypes
+        st.subheader("Most Successful Archetypes")
+        top_archetypes = archetype_data.head(10)
+        
+        fig_archetypes = px.bar(
+            top_archetypes.reset_index(),
+            x='success_archetype',
+            y='winner',
+            hover_data=['made_merge_binary', 'Contestant_Name'],
+            title="Win Rate by Demographic Archetype"
+        )
+        fig_archetypes.update_xaxes(tickangle=45)
+        st.plotly_chart(fig_archetypes, use_container_width=True)
+        
+        # Archetype data table
+        st.dataframe(top_archetypes.style.format({
+            'made_merge_binary': '{:.1%}',
+            'winner': '{:.1%}',
+            'Days_Lasted': '{:.1f}'
+        }))
+        
+        # Correlation heatmap
+        st.subheader("External Factors Correlation Matrix")
+        correlation_matrix = results['correlation_matrix']
+        
+        fig_corr = px.imshow(
+            correlation_matrix,
+            text_auto=True,
+            color_continuous_scale='RdBu',
+            aspect='auto',
+            title="External Factors vs Success Metrics Correlation"
+        )
+        
+        fig_corr.update_layout(
+            width=800,
+            height=500
+        )
+        
+        st.plotly_chart(fig_corr, use_container_width=True)
+        
+        # Key insights
+        st.subheader("Key Insights")
+        st.markdown(f"""
+        **Age Patterns:**
+        - Age-success correlation: {age_corr:.3f}
+        - Younger contestants often have higher energy but less life experience
+        - Middle-aged contestants (30-40) often perform best with good balance
+        
+        **Occupation Impact:**
+        - Income-success correlation: {income_corr:.3f}
+        - Higher-income professions correlate with strategic thinking
+        - Healthcare and legal backgrounds show strong performance
+        
+        **Strategic Validation:**
+        - Self-reported "Strategic Players" do find more advantages on average
+        - "Challenge Beasts" do win more individual challenges
+        - Pre-game target assessment is moderately predictive
+        
+        **Physical Factors:**
+        - Physical competitiveness correlation: {phys_corr:.3f}
+        - Athletic background shows measurable impact on challenge performance
+        - Physical build affects longevity in different ways
+        
+        **Regional Factors:**
+        - Competitive reality TV markets may produce better-prepared contestants
+        - Regional cultural differences affect social gameplay approaches
+        """)
 
 def create_contestant_input_form():
     """Create the contestant input form"""
@@ -565,6 +907,107 @@ if page == "Individual Prediction":
 elif page == "Season 49 Cast Rankings":
     create_season49_rankings()
 
+elif page == "External Factors Analysis":
+    if external_factors_available:
+        create_external_factors_dashboard()
+    else:
+        st.error("External Factors Analysis not available. Please ensure external_factors_analyzer.py is in the src/ directory.")
+        
+        # Provide installation instructions
+        st.markdown("""
+        ### Setup Instructions
+        1. Save the `external_factors_analyzer.py` file to your `src/` directory
+        2. Restart the Streamlit app
+        3. The External Factors Analysis will then be available
+        
+        ### What This Analysis Provides:
+        - **Age Pattern Analysis**: How age correlates with success across different categories
+        - **Occupation Impact**: Income and education level effects on performance  
+        - **Strategic Validation**: Whether self-reported player types match actual gameplay
+        - **Regional Advantages**: Geographic patterns in contestant success
+        - **Physical Factors**: Athletic background vs challenge performance
+        - **Success Archetypes**: High-performing demographic combinations
+        - **Correlation Analysis**: External factors vs success metrics heatmap
+        
+        ### Key Features:
+        - Interactive visualizations with Plotly charts
+        - Comprehensive statistical analysis
+        - Age-gender interaction patterns
+        - Income vs success correlation plots
+        - Strategic archetype validation dashboard
+        - Regional success rate comparisons
+        - Physical competitiveness scoring
+        - Demographic combination win rates
+        """)
+
+elif page == "Batch Analysis":
+    st.header("Batch Analysis")
+    st.info("Upload multiple contestants for batch predictions")
+    
+    # File upload for batch analysis
+    uploaded_file = st.file_uploader("Upload CSV file with contestants", type=['csv'])
+    
+    if uploaded_file is not None:
+        try:
+            df = pd.read_csv(uploaded_file)
+            st.subheader("Data Preview")
+            st.dataframe(df.head())
+            
+            # Prediction mode selection
+            batch_mode = st.radio(
+                "Batch Prediction Mode:",
+                ["Pre-Season Predictions", "Full Game Predictions"]
+            )
+            
+            if st.button("Run Batch Predictions"):
+                with st.spinner("Processing batch predictions..."):
+                    batch_predictions = []
+                    
+                    for _, row in df.iterrows():
+                        contestant_data = row.to_dict()
+                        
+                        # Add dummy values if missing
+                        if 'Made_Merge' not in contestant_data:
+                            contestant_data.update({
+                                'Made_Merge': 'Y', 'Made_Finale': 'N', 'Final_Placement': 10,
+                                'Days_Lasted': 20, 'Elimination_Type': 'Voted_Out',
+                                'Jury_Votes_Received': 0
+                            })
+                        
+                        # Choose predictor based on mode
+                        if batch_mode == "Pre-Season Predictions":
+                            predictions = st.session_state.preseason_predictor.predict_contestant_preseason(contestant_data)
+                        else:
+                            predictions = st.session_state.predictor.predict_contestant_success(contestant_data)
+                        
+                        if predictions:
+                            batch_predictions.append({
+                                'Name': contestant_data.get('Contestant_Name', 'Unknown'),
+                                'Merge_Prob': predictions['merge_prediction']['probability'],
+                                'Finale_Prob': predictions['finale_prediction']['probability'],
+                                'Winner_Prob': predictions['winner_prediction']['probability']
+                            })
+                
+                if batch_predictions:
+                    results_df = pd.DataFrame(batch_predictions)
+                    results_df = results_df.sort_values('Winner_Prob', ascending=False)
+                    
+                    st.subheader("Batch Prediction Results")
+                    st.dataframe(results_df)
+                    
+                    # Visualization
+                    fig = px.bar(results_df.head(10), x='Name', y='Winner_Prob', 
+                               title="Winner Probabilities")
+                    fig.update_xaxes(tickangle=45)
+                    st.plotly_chart(fig, use_container_width=True)
+                    
+                    # Download results
+                    csv = results_df.to_csv(index=False)
+                    st.download_button("Download Results", csv, f"batch_predictions_{batch_mode.lower().replace(' ', '_')}.csv", "text/csv")
+        
+        except Exception as e:
+            st.error(f"Error processing batch file: {e}")
+
 elif page == "Season 49 Management":
     st.header("Season 49 Cast Management")
     
@@ -649,74 +1092,6 @@ elif page == "Season 49 Management":
             
         except Exception as e:
             st.error(f"Error processing file: {e}")
-
-elif page == "Batch Analysis":
-    st.header("Batch Analysis")
-    st.info("Upload multiple contestants for batch predictions")
-    
-    # File upload for batch analysis
-    uploaded_file = st.file_uploader("Upload CSV file with contestants", type=['csv'])
-    
-    if uploaded_file is not None:
-        try:
-            df = pd.read_csv(uploaded_file)
-            st.subheader("Data Preview")
-            st.dataframe(df.head())
-            
-            # Prediction mode selection
-            batch_mode = st.radio(
-                "Batch Prediction Mode:",
-                ["Pre-Season Predictions", "Full Game Predictions"]
-            )
-            
-            if st.button("Run Batch Predictions"):
-                with st.spinner("Processing batch predictions..."):
-                    batch_predictions = []
-                    
-                    for _, row in df.iterrows():
-                        contestant_data = row.to_dict()
-                        
-                        # Add dummy values if missing
-                        if 'Made_Merge' not in contestant_data:
-                            contestant_data.update({
-                                'Made_Merge': 'Y', 'Made_Finale': 'N', 'Final_Placement': 10,
-                                'Days_Lasted': 20, 'Elimination_Type': 'Voted_Out',
-                                'Jury_Votes_Received': 0
-                            })
-                        
-                        # Choose predictor based on mode
-                        if batch_mode == "Pre-Season Predictions":
-                            predictions = st.session_state.preseason_predictor.predict_contestant_preseason(contestant_data)
-                        else:
-                            predictions = st.session_state.predictor.predict_contestant_success(contestant_data)
-                        
-                        if predictions:
-                            batch_predictions.append({
-                                'Name': contestant_data.get('Contestant_Name', 'Unknown'),
-                                'Merge_Prob': predictions['merge_prediction']['probability'],
-                                'Finale_Prob': predictions['finale_prediction']['probability'],
-                                'Winner_Prob': predictions['winner_prediction']['probability']
-                            })
-                
-                if batch_predictions:
-                    results_df = pd.DataFrame(batch_predictions)
-                    results_df = results_df.sort_values('Winner_Prob', ascending=False)
-                    
-                    st.subheader("Batch Prediction Results")
-                    st.dataframe(results_df)
-                    
-                    # Visualization
-                    fig = px.bar(results_df.head(10), x='Name', y='Winner_Prob', 
-                               title="Winner Probabilities")
-                    fig.update_xaxes(tickangle=45)
-                    st.plotly_chart(fig, use_container_width=True)
-                    
-                    # Download results
-                    csv = results_df.to_csv(index=False)
-                    st.download_button("Download Results", csv, f"batch_predictions_{batch_mode.lower().replace(' ', '_')}.csv", "text/csv")
-        
-        except Exception as e:
-            st.error(f"Error processing batch file: {e}")
 
 elif page == "Model Performance":
     st.header("Model Performance Dashboard")
@@ -849,5 +1224,5 @@ elif page == "Historical Analysis":
 
 # Footer
 st.markdown("---")
-st.markdown("**Survivor Success Predictor** - Enhanced with Pre-Season Analysis and Cast Rankings")
+st.markdown("**Survivor Success Predictor** - Enhanced with Pre-Season Analysis, Cast Rankings, and External Factors Analysis")
 st.markdown("*Disclaimer: Predictions are for entertainment purposes. Actual Survivor outcomes involve many unmeasurable factors.*")
