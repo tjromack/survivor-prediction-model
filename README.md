@@ -295,3 +295,7 @@ python src/season_integration.py --season 50
 **Current Model Version**: v1.0 (Season 49 Pre-Season Release)  
 **Last Updated**: September 24, 2025  
 **Next Validation**: Season 49 Finale (December 2025)
+ # #   N e w   F e a t u r e :   E x t e r n a l   F a c t o r s   A n a l y s i s 
+ C o m p r e h e n s i v e   a n a l y s i s   o f   d e m o g r a p h i c   a n d   p r e - g a m e   f a c t o r s   t h a t   p r e d i c t   S u r v i v o r   s u c c e s s ,   i n c l u d i n g   a g e   p a t t e r n s ,   s t r a t e g i c   a r c h e t y p e   v a l i d a t i o n ,   a n d   s u c c e s s   c o r r e l a t i o n s . 
+  
+ 
